@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 
 const userschema = new mongoose.Schema(
     {
-        fullname: {
+        fullName: {
             type: String,
             required: true,
         },
@@ -51,11 +51,15 @@ userschema.pre("save", async function (next) {
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
         next();
-
     } catch (error) {
         console.error("Error hashing password:", error);
         next(error);
     }
 });
+
+userschema.methods.matchPassword = async function (enteredPassword) {
+    const isPasswordMatch = await bcrypt.compare(enteredPassword, this.password);
+    return isPasswordMatch;
+};
 const User = mongoose.model("User", userschema);
 export default User;
