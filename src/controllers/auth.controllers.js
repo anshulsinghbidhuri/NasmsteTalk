@@ -2,6 +2,7 @@ import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 export async function signup(req, res) {
+
     const { fullName, email, password } = req.body;
     try {
         if (!fullName || !email || !password) {
@@ -44,14 +45,14 @@ export async function signup(req, res) {
             sameSite: "strict", // Helps prevent CSRF attacks
         });
         res.status(201).json({ message: "User created successfully!", success: true, user: newUser });
-
     } catch (error) {
         console.error("Error during signup:", error);
         res.status(500).json({ message: "Internal Server Error!", success: false, error: error.message });
 
     }
+}
 
-} export async function login(req, res) {
+export async function login(req, res) {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
@@ -78,10 +79,13 @@ export async function signup(req, res) {
         res.status(500).json({ message: "Internal Server Error!", success: false, error: error.message });
     }
 
-} export function logout(req, res) {
+}
+
+export function logout(req, res) {
     res.clearCookie("jwt");
     res.status(200).json({ message: "Logout successful!" });
 }
+
 export async function onBoarding(req, res) {
     try {
         const userId = req.user._id;
@@ -110,9 +114,35 @@ export async function onBoarding(req, res) {
         if (!updateUser) {
             return res.status(404).json({ message: "User not found!" });
         }
+        res.status(200).json({ message: "Onboarding successful!", user: updateUser });
         // todo upsert stream user
     } catch (error) {
         console.error("Error during onboarding:", error);
+        res.status(500).json({ message: "Internal Server Error!" });
+    }
+}
+
+export async function Delete(req, res) {
+    try {
+        const { fullName, email } = req.body; // Get fullName and email from request body
+        if (!fullName || !email) {
+            return res.status(400).json({ message: "Full name and email are required!" });
+        }
+        // Find and delete user by fullName and email
+        const deletedUser = await User.findOneAndDelete({ fullName: fullName, email: email });
+
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found with this full name and email!" });
+        }
+        res.status(200).json({
+            message: "User deleted successfully!",
+            deletedUser: {
+                fullName: deletedUser.fullName,
+                email: deletedUser.email
+            }
+        });
+    } catch (error) {
+        console.error("Error deleting user:", error);
         res.status(500).json({ message: "Internal Server Error!" });
     }
 }
