@@ -115,7 +115,19 @@ export async function onBoarding(req, res) {
             return res.status(404).json({ message: "User not found!" });
         }
         res.status(200).json({ message: "Onboarding successful!", user: updateUser });
-        // todo upsert stream user
+
+        try {
+            await upsertStreamUser({
+                id: updateUser._id.toString(),
+                name: updateUser.fullName,
+                image: updateUser.profilePic || "",
+            });
+            console.log(`Stream user upserted successfully for ${updateUser.fullName}`);
+
+        } catch ({ streamError }) {
+            console.error("Error upserting stream user:", streamError);
+        }
+        res.status(200).json({ success: true, message: "Onboarding completed successfully!", user: updateUser });
     } catch (error) {
         console.error("Error during onboarding:", error);
         res.status(500).json({ message: "Internal Server Error!" });
